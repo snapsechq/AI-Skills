@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExposureFindings",
+  "description": "Schema for reporting validated attack surface security exposures",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "associatedAsset",
+      "exposure_tag",
+      "title",
+      "description",
+      "severity",
+      "confidence",
+      "impact",
+      "remediation",
+      "steps_to_reproduce",
+      "references",
+      "attack_path"
+    ],
+    "properties": {
+      "associatedAsset": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type of asset, e.g. web_server, domain, ip, api_endpoint"
+          },
+          "value": {
+            "type": "string",
+            "description": "Primary value or URL of the asset"
+          },
+          "subdomain": {
+            "type": "string",
+            "description": "Subdomain if applicable"
+          }
+        }
+      },
+      "exposure_tag": {
+        "type": "string",
+        "description": "Deterministic canonical tag for ingestion deduplication: <issue_slug>:<normalized_target> (e.g. exposed-git-repository:api.example.com)"
+      },
+      "title": {
+        "type": "string",
+        "description": "10-15 word concise title describing confirmed security issue"
+      },
+      "description": {
+        "type": "string",
+        "description": "Concise technical description of what was observed and validated (max 50 words)"
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["critical", "high", "medium", "low"]
+      },
+      "confidence": {
+        "type": "string",
+        "enum": ["critical", "high", "medium", "low"]
+      },
+      "impact": {
+        "type": "string",
+        "description": "Explain concrete security consequence an attacker can achieve (max 50 words)"
+      },
+      "remediation": {
+        "type": "string",
+        "description": "Practical remediation required to eliminate demonstrated exposure (max 50 words)"
+      },
+      "steps_to_reproduce": {
+        "type": "string",
+        "description": "Clear step-by-step instructions to reproduce exact same result (max 70 words)"
+      },
+      "references": {
+        "type": "array",
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "attack_path": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["step", "status"],
+          "properties": {
+            "step": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["confirmed", "inferred"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

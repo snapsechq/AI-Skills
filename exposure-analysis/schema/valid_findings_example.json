@@ -1,0 +1,71 @@
+[
+  {
+    "associatedAsset": {
+      "type": "web_server",
+      "value": "https://dashboard.example.com",
+      "subdomain": "dashboard.example.com"
+    },
+    "exposure_tag": "unauthenticated-k8s-dashboard:dashboard.example.com",
+    "title": "Unauthenticated Kubernetes Dashboard Exposing Cluster Management and Secret Tokens",
+    "description": "Publicly exposed Kubernetes Dashboard accessible without credentials, providing cluster-admin privileges to browse namespaces and retrieve secrets.",
+    "severity": "critical",
+    "confidence": "high",
+    "impact": "Full cluster compromise allowing attackers to read confidential environment variables, pull proprietary container images, and execute arbitrary commands in cluster pods.",
+    "remediation": "Restrict dashboard access behind an authenticated reverse proxy or VPN, enable RBAC authentication, and disable public ingress routing.",
+    "steps_to_reproduce": "1. Navigate to https://dashboard.example.com in browser or curl.\n2. Observe dashboard UI loading without any authentication prompt.\n3. Verify access by checking pod list in default namespace via /api/v1/namespaces.",
+    "references": [
+      "https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/",
+      "https://cwe.mitre.org/data/definitions/306.html"
+    ],
+    "attack_path": [
+      {
+        "step": "Attacker navigates to publicly routable dashboard subdomain",
+        "status": "confirmed"
+      },
+      {
+        "step": "Kubernetes dashboard UI loads without requiring authentication",
+        "status": "confirmed"
+      },
+      {
+        "step": "Attacker queries cluster pods and secrets through web API",
+        "status": "confirmed"
+      },
+      {
+        "step": "Extracted tokens allow arbitrary remote command execution across cluster nodes",
+        "status": "inferred"
+      }
+    ]
+  },
+  {
+    "associatedAsset": {
+      "type": "web_server",
+      "value": "https://api.example.com/.git/HEAD",
+      "subdomain": "api.example.com"
+    },
+    "exposure_tag": "exposed-git-repository:api.example.com",
+    "title": "Publicly Accessible Git Metadata Exposing Application Source Code and Configuration",
+    "description": "The .git repository directory is exposed via web server misconfiguration, allowing extraction of source files and committed credentials.",
+    "severity": "high",
+    "confidence": "high",
+    "impact": "Complete source code disclosure enabling discovery of hardcoded API secrets, architectural flaws, and internal service credentials.",
+    "remediation": "Block web server access to dotfiles like .git in Nginx or Apache configuration rules immediately.",
+    "steps_to_reproduce": "1. Execute curl -sI https://api.example.com/.git/HEAD.\n2. Observe HTTP 200 OK response with body containing 'ref: refs/heads/master'.\n3. Confirm exposure of index and object store files.",
+    "references": [
+      "https://cwe.mitre.org/data/definitions/538.html"
+    ],
+    "attack_path": [
+      {
+        "step": "Attacker requests /.git/HEAD on the public production host",
+        "status": "confirmed"
+      },
+      {
+        "step": "Web server returns repository head reference without authentication",
+        "status": "confirmed"
+      },
+      {
+        "step": "Attacker dumps repository objects to reconstruct complete source tree",
+        "status": "inferred"
+      }
+    ]
+  }
+]
