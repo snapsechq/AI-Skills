@@ -1,0 +1,104 @@
+{
+  "results": [
+    {
+      "orgId": "org-67890",
+      "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "Unauthenticated Redis In-Memory Datastore Exposed to Public Internet",
+      "description": "The Redis in-memory cache daemon was identified listening on public interface port 6379 without password authentication configured (requirepass disabled). Sending the INFO command over a TCP socket immediately returned internal system metrics, memory statistics, and keyspace summaries without requiring credentials.",
+      "steps_to_reproduce": "1. Connect directly to the TCP socket on the target asset: `nc -nv 198.51.100.20 6379` or `redis-cli -h 198.51.100.20 -p 6379`.\n2. Send the Redis command `INFO` followed by CRLF.\n3. Verify that the server responds with status `+OK` or Redis version details (`redis_version:6.0.9`) and full cluster memory metrics without prompting for AUTH.",
+      "impact": "Unrestricted unauthorized access to cached session tokens, user data, and potential remote code execution via Redis file writing primitives (overwriting authorized_keys or cron entries).",
+      "references": [
+        "https://redis.io/docs/management/security/",
+        "https://cwe.mitre.org/data/definitions/306.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "unauth-redis-exposure:198.51.100.20:6379",
+      "asset": {
+        "value": "198.51.100.20:6379"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Missing Authentication for Critical Function",
+        "value": "CWE-306"
+      }
+    },
+    {
+      "orgId": "org-67890",
+      "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "Kubernetes Kubelet API Anonymous Authentication Enabled on Port 10250",
+      "description": "The Kubernetes Kubelet daemon on port 10250 allows unauthenticated anonymous requests (--anonymous-auth=true). Querying the `/pods` endpoint returns JSON metadata enumerating all pods, namespaces, container names, and environment variable references currently scheduled on the node.",
+      "steps_to_reproduce": "1. Execute curl request against the Kubelet HTTPS endpoint: `curl -k -s https://198.51.100.20:10250/pods`.\n2. Observe HTTP 200 OK response containing a JSON list of running pod specifications.\n3. Confirm that no TLS client certificate or Bearer authorization header was requested by the server.",
+      "impact": "Exposure of cluster topology, container secret names, and potentially arbitrary command execution inside containers via Kubelet exec API endpoints if RBAC is not strictly enforced.",
+      "references": [
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-authentication-authorization/",
+        "https://cwe.mitre.org/data/definitions/287.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "kubelet-anonymous-auth:198.51.100.20:10250",
+      "asset": {
+        "value": "https://198.51.100.20:10250"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Authentication",
+        "value": "CWE-287"
+      }
+    },
+    {
+      "orgId": "org-67890",
+      "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "SNMP Daemon Accessible with Default Community String 'public'",
+      "description": "An SNMP agent was identified on UDP port 161 configured with the default community string 'public'. Performing an SNMPWALK over SNMPv2c successfully retrieved the full system MIB tree, including device hostname, operating system kernel build, active network interface IP addresses, and routing tables.",
+      "steps_to_reproduce": "1. Query target UDP port 161 using snmpwalk: `snmpwalk -v 2c -c public 198.51.100.20 1.3.6.1.2.1.1`.\n2. Observe response returning SNMP MIB values such as `sysDescr` and `sysName`.\n3. Verify interface IP addressing enumeration via `snmpwalk -v 2c -c public 198.51.100.20 1.3.6.1.2.1.4.20`.",
+      "impact": "Complete reconnaissance of internal network architecture, interface configurations, and running process names, significantly aiding targeted lateral movement and infrastructure exploitation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://tools.ietf.org/html/rfc1157"
+      ],
+      "severity": "medium",
+      "sent_to_vm": false,
+      "universal_vuln_id": "snmp-default-public-community:198.51.100.20:161",
+      "asset": {
+        "value": "198.51.100.20:161"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Use of Hard-coded Credentials",
+        "value": "CWE-798"
+      }
+    },
+    {
+      "orgId": "org-67890",
+      "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "Support for Deprecated Insecure TLS 1.0 and TLS 1.1 Protocols",
+      "description": "The TLS termination service on port 443 supports legacy protocols TLS 1.0 and TLS 1.1. These protocols rely on obsolete cryptographic primitives vulnerable to known downgrade and cipher suite attacks (e.g. BEAST, POODLE) and fail to satisfy modern compliance benchmarks (NIST SP 800-52r2, PCI-DSS v4.0).",
+      "steps_to_reproduce": "1. Initiate a TLS handshake explicitly requesting TLS 1.0: `openssl s_client -connect 198.51.100.20:443 -tls1`.\n2. Verify that the server accepts the connection and completes the handshake successfully.\n3. Repeat with `-tls1_1` and verify handshake completion.",
+      "impact": "Potential eavesdropping and interception of encrypted communication via downgrade attacks against clients on untrusted networks.",
+      "references": [
+        "https://datatracker.ietf.org/doc/html/rfc8996",
+        "https://cwe.mitre.org/data/definitions/326.html"
+      ],
+      "severity": "low",
+      "sent_to_vm": false,
+      "universal_vuln_id": "tls-deprecated-tls10-tls11:198.51.100.20:443",
+      "asset": {
+        "value": "198.51.100.20:443"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Inadequate Encryption Strength",
+        "value": "CWE-326"
+      }
+    }
+  ]
+}
