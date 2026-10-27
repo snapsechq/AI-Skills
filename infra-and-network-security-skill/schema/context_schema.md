@@ -13,18 +13,34 @@ The JSON context file contains the following top-level properties:
   "orgId": "org-67890",
   "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
   "scanId": "65b2a1c0e4b023f0a1b2c3d5",
-  "name": "Corporate DMZ & Perimeter Infrastructure Assessment",
-  "description": "Black-box network penetration test targeting DMZ edge routers, public services, and VPN gateways.",
+  "name": "Corporate DMZ & Internal Host Security Assessment",
+  "description": "White-box infrastructure assessment with authorized SSH credentials for internal host auditing.",
   "type": "network",
   "pentest_config": {
-    "target_type": "black-box",
+    "target_type": "white-box",
     "ip": "198.51.100.20",
-    "url": "https://vpn.example.com"
+    "ips": [
+      "198.51.100.20",
+      "198.51.100.21"
+    ],
+    "excluded_ips": [
+      "198.51.100.254"
+    ],
+    "url": "https://vpn.example.com",
+    "engagement": "standard",
+    "ssh": {
+      "host": "198.51.100.20",
+      "port": 22,
+      "username": "audituser",
+      "auth_method": "key",
+      "secret": "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----",
+      "privilege": "standard"
+    },
+    "notes": "Target host hosts internal API services and Redis bound to loopback."
   },
   "scan_config": {
     "frequency": "once",
-    "start_at_time": "14:00",
-    "start_at_date": "2026-10-25"
+    "next_run_at": "2026-10-25T14:00:00.000Z"
   },
   "vm_config": {
     "assessmentId": "vm-assess-1042"
@@ -44,24 +60,43 @@ The JSON context file contains the following top-level properties:
 | `scanId` | String / ObjectId (Optional) | MongoDB ID of the current scan execution instance. Must be attached to findings when present. |
 | `name` | String | Human-readable title of the assessment campaign. |
 | `description` | String | Scope narrative or operational guidelines provided by the administrator. |
-| `type` | String (`"web"` \| `"network"`) | Assessment category. For this skill, this will predominantly be `"network"`. |
-| `pentest_config` | Object | Target specification detailing what network assets are in scope. |
-| `pentest_config.target_type` | String (`"black-box"` \| `"gray-box"` \| `"white-box"`) | Assessment posture: <br>• `black-box`: Zero internal knowledge, zero credentials. Test from external attacker perspective.<br>• `gray-box`: Partial architecture knowledge or standard user role context provided.<br>• `white-box`: Full configuration or internal architecture details provided. |
-| `pentest_config.ip` | String | Target IP address, comma-separated IPs, or CIDR block (e.g., `198.51.100.20` or `198.51.100.0/28`). |
-| `pentest_config.url` | String | Target URL, domain name, or hostname resolving to the target infrastructure (e.g., `https://vpn.example.com`). |
-| `scan_config` | Object | Scheduling parameters (`frequency`: `"once"`, `"weekly"`, `"monthly"`, start times). |
-| `vm_config` | Object | Vulnerability Management synchronization configuration (e.g. `assessmentId`). |
+| `type` | String (`"network"` \| `"infra"` \| `"web"`) | Assessment category. For this skill, this is `"network"` or `"infra"`. |
+| `pentest_config` | Object | Target specification detailing network assets, posture, and credentials. |
+| `pentest_config.target_type` | String (`"black-box"` \| `"gray-box"` \| `"white-box"`) | Assessment posture: <br>• `black-box`: Zero internal knowledge, zero credentials. Test strictly from external network perspective.<br>• `gray-box`: Partial architecture knowledge or limited role context provided.<br>• `white-box`: Full target visibility; when SSH configuration is provided, permits internal host auditing. |
+| `pentest_config.ip` | String | Primary target IP address, comma-separated IPs, or CIDR block (e.g. `198.51.100.20`). |
+| `pentest_config.ips` | Array of Strings | Complete array of target IP addresses or CIDR subnets in scope. |
+| `pentest_config.excluded_ips` / `excluded` | Array of Strings | List of IP addresses or subnets explicitly excluded from scanning. |
+| `pentest_config.url` | String | Target URL, domain name, or hostname resolving to the target infrastructure (e.g. `https://vpn.example.com`). |
+| `pentest_config.engagement` | String | Engagement style or scope identifier. |
+| `pentest_config.ssh` | Object | **SSH Host Access Configuration for White-Box Auditing** (see sub-fields below). |
+| `pentest_config.ssh.host` | String | Hostname or IP address for SSH authentication. |
+| `pentest_config.ssh.port` | Number | SSH port (default: `22`). |
+| `pentest_config.ssh.username` | String | SSH user account name. |
+| `pentest_config.ssh.auth_method` | String (`"key"` \| `"password"`) | Authentication method: `"key"` (private key string) or `"password"`. |
+| `pentest_config.ssh.secret` | String | Private key contents (PEM/OpenSSH format) or password string. |
+| `pentest_config.ssh.privilege` | String (`"standard"` \| `"sudo"` \| `"root"`) | Declared user account privilege tier on the target host. |
+| `pentest_config.notes` | String | Scope guidelines, credentials notes, or testing boundaries provided by the user. |
+| `scan_config` | Object | Scheduling parameters (`frequency`: `"once"`, `"daily"`, `"weekly"`, `"monthly"`). |
+| `vm_config` | Object | Vulnerability Management synchronization configuration (`assessmentId`). |
 
 ---
 
 ## 3. Context Ingestion Rules for the Agent
 
-1. **Extract Targets**:
-   - The primary targets are extracted from `pentest_config.ip` and `pentest_config.url`.
-   - If both `ip` and `url` are supplied, the agent must correlate both: verify DNS resolution of the URL and determine if the IP matches the resolved address.
-   - If `ip` is a CIDR notation (e.g. `198.51.100.0/24`), all IPs within the CIDR are considered in-scope targets for Phase 1 host discovery.
+1. **Extract Targets & Exclusions**:
+   - The primary targets are extracted from `pentest_config.ip`, `pentest_config.ips`, and `pentest_config.url`.
+   - Excluded IPs defined in `pentest_config.excluded_ips` or `pentest_config.excluded` must be strictly omitted from all active scans.
+   - If both `ip` and `url` are supplied, correlate both: verify DNS resolution of the URL and determine if the IP matches the resolved address.
+   - If CIDR notation is used (e.g. `198.51.100.0/24`), enumerate all individual host IPs for phase 1 reachability probes.
 2. **Context Persistence**:
-   - Retain `orgId`, `pentestId`, and `scanId` in memory throughout the session to populate the mandatory fields in every reported vulnerability object.
-3. **Target Type Adaptation**:
-   - For `black-box`, do not assume any internal credentials or trusted network access; verify reachability solely from external vantage points.
-   - For `gray-box`, check if auxiliary credentials or endpoint lists are provided in `description` or accompanying workspace files.
+   - Retain `orgId`, `pentestId`, and `scanId` in memory throughout the session to populate mandatory fields in every reported vulnerability object.
+3. **Target Type Adaptation & White-Box SSH Configuration**:
+   - **`black-box`**: Do not assume any internal credentials or trusted network access; verify reachability solely from external network vantage points.
+   - **`gray-box`**: Check if auxiliary credentials or endpoint lists are provided in `description`, `notes`, or accompanying workspace files.
+   - **`white-box`**:
+     - **Check for SSH Configuration**: The agent MUST inspect `pentest_config.ssh`.
+     - **Internal Host Enumeration Skill Activation**: If `pentest_config.ssh` is provided with `host`, `username`, and `secret`:
+       - The agent recognizes that authorized credentials exist to evaluate the host from the inside.
+       - The agent activates `skills/internal-host-enumeration.md` to conduct internal auditing alongside external reconnaissance.
+       - Internal enumeration encompasses: auditing localhost-only listeners (`127.0.0.1`), privilege escalation boundaries, `sudo` permissions (`sudo -l`), running background services, file permissions on sensitive configs, cron jobs, environment secrets, and SSH daemon hardening (`sshd_config`).
+     - **Missing SSH Configuration in White-Box**: If `target_type` is `white-box` but `ssh` is omitted, blank, or lacks authentication secrets, the agent documents that SSH access was not supplied and proceeds with white-box network testing using provided architecture notes and IP scope.

@@ -99,6 +99,31 @@
         "name": "Inadequate Encryption Strength",
         "value": "CWE-326"
       }
+    },
+    {
+      "orgId": "org-67890",
+      "pentestId": "65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "Insecure Sudo Configuration Permits Standard User Full Root Privilege Escalation",
+      "description": "During white-box internal host security auditing via authorized SSH access, the sudoers configuration was evaluated using 'sudo -l -n'. The standard audit user account was found configured with unrestricted NOPASSWD privileges for all commands ('(ALL : ALL) NOPASSWD: ALL'), allowing any process executing under this account to transition immediately to root without re-authenticating.",
+      "steps_to_reproduce": "1. Connect to target host via SSH using standard credentials.\n2. Execute sudo privileges query: `sudo -l -n`.\n3. Observe output displaying: `(ALL : ALL) NOPASSWD: ALL`.\n4. Execute non-destructive verification: `sudo id` and verify output: `uid=0(root) gid=0(root)`.",
+      "impact": "Complete privilege escalation from standard user to root, compromising host integrity and bypassing all access control boundaries.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/269.html",
+        "https://www.sudo.ws/docs/man/sudoers.man/"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "sudo-nopasswd-privilege-escalation:198.51.100.20",
+      "asset": {
+        "value": "198.51.100.20:ssh-internal"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Privilege Management",
+        "value": "CWE-269"
+      }
     }
   ]
 }
