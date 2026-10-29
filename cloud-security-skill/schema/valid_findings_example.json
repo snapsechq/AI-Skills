@@ -1,0 +1,104 @@
+{
+  "results": [
+    {
+      "orgId": "org-98765",
+      "pentestId": "pen_65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "scan_65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "AWS S3 Bucket Lacks Public Access Block with Public Read ACL Enabled",
+      "description": "Amazon S3 bucket customer-export-bucket was verified to have all four S3 Block Public Access settings disabled and possesses a bucket ACL granting READ permission to the AllUsers group. Active API inspection confirmed that unauthenticated GET requests against objects stored in this bucket return HTTP 200 OK without requiring AWS credentials.",
+      "steps_to_reproduce": "1. Query bucket public access block using AWS CLI:\naws s3api get-public-access-block --bucket customer-export-bucket\nObserve all BlockPublic settings set to false.\n2. Query bucket ACL configuration:\naws s3api get-bucket-acl --bucket customer-export-bucket\nObserve Grantee URI http://acs.amazonaws.com/groups/global/AllUsers with Permission READ.\n3. Verify unauthenticated anonymous download:\ncurl -I https://customer-export-bucket.s3.amazonaws.com/exports/invoices-latest.csv\nObserve HTTP 200 OK response with file headers.",
+      "impact": "Unrestricted exposure of sensitive customer invoices and PII to anyone on the public internet, violating privacy compliance regulations (GDPR, PCI-DSS) and leading to data breach liability.",
+      "references": [
+        "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+        "https://cwe.mitre.org/data/definitions/284.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "s3-public-access-enabled:aws:arn:aws:s3:::customer-export-bucket",
+      "asset": {
+        "value": "arn:aws:s3:::customer-export-bucket"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Access Control",
+        "value": "CWE-284"
+      }
+    },
+    {
+      "orgId": "org-98765",
+      "pentestId": "pen_65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "scan_65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "AWS EC2 Security Group Exposes SSH Management Port 22 to Public Internet (0.0.0.0/0)",
+      "description": "EC2 Security Group sg-0a1b2c3d4e5f67890 attached to production bastion instance contains an inbound rule permitting TCP ingress traffic on port 22 from CIDR 0.0.0.0/0 without source IP restriction. Active port probing against the public IPv4 of the attached instance confirmed an open OpenSSH listener accepting connections.",
+      "steps_to_reproduce": "1. Inspect inbound security group permissions:\naws ec2 describe-security-groups --group-ids sg-0a1b2c3d4e5f67890\nObserve IpRanges containing CidrIp 0.0.0.0/0.\n2. Verify associated running instances:\naws ec2 describe-instances --filters Name=instance.group-id,Values=sg-0a1b2c3d4e5f67890\n3. Execute network probe: nc -zv <PublicIpAddress> 22.",
+      "impact": "Exposes host authentication boundary directly to brute-force credential stuffing, automated SSH vulnerability scanners, and SSH zero-day exploits without perimeter network defense.",
+      "references": [
+        "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-rules-reference.html",
+        "https://cwe.mitre.org/data/definitions/1008.html"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "securitygroup-open-ssh:aws:sg-0a1b2c3d4e5f67890",
+      "asset": {
+        "value": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-0a1b2c3d4e5f67890"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Architectural Compliance Failure",
+        "value": "CWE-1008"
+      }
+    },
+    {
+      "orgId": "org-98765",
+      "pentestId": "pen_65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "scan_65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "GCP Cloud Storage Bucket Grants allUsers roles/storage.objectViewer Role",
+      "description": "Google Cloud Storage bucket gs://fin-reports-prod was verified to have an IAM policy binding assigning roles/storage.objectViewer to member allUsers. This grants any unauthenticated user on the internet permissions to list and download all objects in the bucket without authenticating with a Google account.",
+      "steps_to_reproduce": "1. Fetch bucket IAM policy via gcloud or REST API:\ngcloud storage buckets get-iam-policy gs://fin-reports-prod --format=json\nObserve binding: members allUsers, role roles/storage.objectViewer.\n2. Query Cloud Storage REST API anonymously without Bearer token:\ncurl -s https://storage.googleapis.com/storage/v1/b/fin-reports-prod/o\nObserve JSON response listing all stored items.",
+      "impact": "Full anonymous disclosure of proprietary financial reports, internal database extracts, and confidential documents.",
+      "references": [
+        "https://cloud.google.com/storage/docs/access-control/iam-roles",
+        "https://cwe.mitre.org/data/definitions/732.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "gcs-public-object-viewer:gcp:projects/my-prod/buckets/fin-reports-prod",
+      "asset": {
+        "value": "gcp://my-prod/storage/fin-reports-prod"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Incorrect Permission Assignment for Critical Resource",
+        "value": "CWE-732"
+      }
+    },
+    {
+      "orgId": "org-98765",
+      "pentestId": "pen_65b2a1c0e4b023f0a1b2c3d4",
+      "scanId": "scan_65b2a1c0e4b023f0a1b2c3d5",
+      "status": "In Review",
+      "title": "Azure Storage Account Allows Unauthenticated Public Blob Access",
+      "description": "Azure Blob Storage Account stproddataassets has property allowBlobPublicAccess configured to true, and container public-share has public access level set to Blob. This allows anonymous clients to read blob content directly via container URL without acquiring a Shared Access Signature (SAS) token or Microsoft Entra ID OAuth token.",
+      "steps_to_reproduce": "1. Verify storage account property:\naz storage account show --name stproddataassets --query allowBlobPublicAccess\nObserve return value true.\n2. Inspect container public access level:\naz storage container show --name public-share --account-name stproddataassets --query properties.publicAccess\nObserve return value blob.\n3. Request blob file anonymously via curl:\ncurl -I https://stproddataassets.blob.core.windows.net/public-share/config-dump.json\nObserve HTTP 200 OK response.",
+      "impact": "Direct unauthorized data retrieval from cloud blob storage, bypassing all corporate authentication policies and perimeter IP access restrictions.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-configure",
+        "https://cwe.mitre.org/data/definitions/284.html"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "azure-storage-public-blob-access:azure:stproddataassets/public-share",
+      "asset": {
+        "value": "/subscriptions/sub-1234/resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stproddataassets"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Access Control",
+        "value": "CWE-284"
+      }
+    }
+  ]
+}

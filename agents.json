@@ -3,16 +3,24 @@
         {
             "name": "Exposure Analysis",
             "value": "exposure-analysis",
+            "agent_backend": "hermes",
             "skill_folder": "exposure_analysis"
         },
         {
             "name": "Network & Infrastructure Security Agent",
             "value": "network-infra-security-agent",
+            "agent_backend": "hermes",
             "skill_folder": "infra-and-network-security-skill"
         },
         {
             "name": "Web Application Security Agent",
             "value": "web-app-security-agent"
+        },
+        {
+            "name": "Cloud Security Agent",
+            "value": "cloud-security-agent",
+            "agent_backend": "cloud-security",
+            "skill_folder": "cloud-security-skill"
         }
     ]
 }
