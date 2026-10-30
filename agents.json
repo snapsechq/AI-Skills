@@ -1,25 +1,31 @@
 {
     "agents": [
         {
-            "name": "Exposure Analysis",
+            "name": "Exposure Analysis Agent",
             "value": "exposure-analysis",
             "agent_backend": "hermes",
+            "description": "Identifies and analyzes attack surface, shadow IT, and exposed digital assets.",
             "skill_folder": "exposure_analysis"
         },
         {
             "name": "Network & Infrastructure Security Agent",
             "value": "network-infra-security-agent",
             "agent_backend": "hermes",
+            "description": "Assesses network and infrastructure security, identifying vulnerabilities, misconfigurations, and policy violations.",
             "skill_folder": "infra-and-network-security-skill"
         },
         {
             "name": "Web Application Security Agent",
-            "value": "web-app-security-agent"
+            "value": "web-app-security-agent",
+            "agent_backend": "hermes",
+            "description": "Evaluates web applications for vulnerabilities and security best practices.",
+            "skill_folder": "web-app-security-skill"
         },
         {
             "name": "Cloud Security Agent",
             "value": "cloud-security-agent",
             "agent_backend": "cloud-security-agent",
+            "description": "Analyzes cloud infrastructure and resources for security posture and compliance.",
             "skill_folder": "cloud-security-skill"
         }
     ]
