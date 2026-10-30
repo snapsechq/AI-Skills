@@ -19,7 +19,7 @@
         {
             "name": "Cloud Security Agent",
             "value": "cloud-security-agent",
-            "agent_backend": "cloud-security",
+            "agent_backend": "cloud-security-agent",
             "skill_folder": "cloud-security-skill"
         }
     ]
