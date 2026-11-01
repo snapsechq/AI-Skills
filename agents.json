@@ -27,6 +27,13 @@
             "agent_backend": "cloud-security-agent",
             "description": "Analyzes cloud infrastructure and resources for security posture and compliance.",
             "skill_folder": "cloud-security-skill"
+        },
+        {
+            "name": "SAST Security Agent",
+            "value": "sast-agent",
+            "agent_backend": "sast-agent",
+            "description": "Performs static application security testing, code auditing, and false-positive elimination on source repositories.",
+            "skill_folder": "sast-skill"
         }
     ]
 }

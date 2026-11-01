@@ -1,0 +1,79 @@
+{
+  "results": [
+    {
+      "orgId": "org_enterprise_01",
+      "status": "In Review",
+      "scanId": "scan_run_101",
+      "pentestId": "pentest_code_audit_2026",
+      "title": "SQL Injection in User Search Endpoint via Raw Query Concatenation",
+      "description": "The search query parameter `keyword` is concatenated directly into a raw SQL query string in `src/repositories/user.repository.js` without using parameterized placeholders or an ORM abstraction. Untrusted user input reaches the database execution engine without sanitization.",
+      "steps_to_reproduce": "1. Inspect `src/controllers/user.controller.js` line 34: `const { keyword } = req.query;`.\n2. Observe call: `await userRepository.findByKeyword(keyword)` in line 45.\n3. In `src/repositories/user.repository.js` line 67, examine query construction: `const sql = \"SELECT * FROM users WHERE username LIKE '%\" + keyword + \"%'\";`.\n4. Input with single quotes and SQL clauses executes arbitrary SQL queries.",
+      "impact": "An attacker can extract confidential customer data, bypass authorization checks, and potentially gain database administrative access.",
+      "references": [
+        "https://owasp.org/www-community/attacks/SQL_Injection",
+        "https://cwe.mitre.org/data/definitions/89.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "sql-injection:user-service:src/repositories/user.repository.js:67",
+      "asset": {
+        "value": "src/repositories/user.repository.js:67"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+        "value": "CWE-89"
+      }
+    },
+    {
+      "orgId": "org_enterprise_01",
+      "status": "In Review",
+      "scanId": "scan_run_101",
+      "pentestId": "pentest_code_audit_2026",
+      "title": "Server-Side Request Forgery (SSRF) via Webhook Verification Endpoint",
+      "description": "The webhook verification service in `src/services/webhook.service.js` accepts an arbitrary URL from user input and makes an outbound HTTP request using Axios without validating if the destination IP is within restricted RFC 1918 private IP ranges or the cloud metadata endpoint (169.254.169.254).",
+      "steps_to_reproduce": "1. Inspect `src/services/webhook.service.js` line 88 where `axios.post(webhookUrl, payload)` is executed.\n2. Observe lack of DNS resolution checks or private CIDR block filtering.\n3. Supply `http://169.254.169.254/latest/meta-data/` as `webhookUrl` to query instance identity credentials.",
+      "impact": "Attackers can probe internal microservices, access cloud metadata services, and steal instance IAM credentials.",
+      "references": [
+        "https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/",
+        "https://cwe.mitre.org/data/definitions/918.html"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "ssrf:notification-service:src/services/webhook.service.js:88",
+      "asset": {
+        "value": "src/services/webhook.service.js:88"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Server-Side Request Forgery (SSRF)",
+        "value": "CWE-918"
+      }
+    },
+    {
+      "orgId": "org_enterprise_01",
+      "status": "In Review",
+      "scanId": "scan_run_101",
+      "pentestId": "pentest_code_audit_2026",
+      "title": "Hardcoded Production JWT Signing Secret in Configuration",
+      "description": "A high-entropy production JWT signing secret is hardcoded directly into `src/config/jwt.js`. If this repository is shared or compromised, any party can forge arbitrary authentication tokens with administrative claims.",
+      "steps_to_reproduce": "1. Review `src/config/jwt.js` line 12: `const JWT_SECRET = 'SuperSecretKey_Production_2026_XYZ!';`.\n2. Note that `process.env.JWT_SECRET` is not used as a fallback.\n3. Sign arbitrary token: `jwt.sign({ role: 'admin', userId: 1 }, 'SuperSecretKey_Production_2026_XYZ!')`.",
+      "impact": "Complete authentication bypass and privilege escalation to any user or administrator role.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html"
+      ],
+      "severity": "critical",
+      "sent_to_vm": false,
+      "universal_vuln_id": "hardcoded-secret:auth-service:src/config/jwt.js:12",
+      "asset": {
+        "value": "src/config/jwt.js:12"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Use of Hard-coded Credentials",
+        "value": "CWE-798"
+      }
+    }
+  ]
+}
+
