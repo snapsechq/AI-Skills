@@ -34,6 +34,13 @@
             "agent_backend": "sast-agent",
             "description": "Performs static application security testing, code auditing, and false-positive elimination on source repositories.",
             "skill_folder": "sast-skill"
+        },
+        {
+            "name": "SCA Security Agent",
+            "value": "sca-agent",
+            "agent_backend": "sca-agent",
+            "description": "Performs Software Composition Analysis (SCA), third-party dependency auditing, CVE verification, and reachability analysis.",
+            "skill_folder": "sca-skill"
         }
     ]
 }

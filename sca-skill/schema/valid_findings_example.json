@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "orgId": "org_enterprise_01",
+      "status": "In Review",
+      "scanId": "scan_run_201",
+      "pentestId": "pentest_sca_audit_2026",
+      "title": "CVE-2021-23337: Command Injection in lodash via template function",
+      "description": "The project depends on `lodash` version `4.17.20`. A command injection vulnerability exists in versions prior to 4.17.21 in the `template` function when setting `sourceURL` or injecting untrusted template variables. Source code inspection reveals `src/utils/template-helper.js` imports `lodash` and invokes `_.template()` on external parameters.",
+      "steps_to_reproduce": "1. Verify dependency in `package-lock.json`: `\"lodash\": { \"version\": \"4.17.20\" }`.\n2. Observe import in `src/utils/template-helper.js`: `import _ from 'lodash';` and call `_.template(options.raw)`.\n3. Supply crafted template string containing JavaScript expressions executing child process.",
+      "impact": "Attackers can execute arbitrary commands on the host operating system with the privileges of the web application.",
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2021-23337",
+        "https://github.com/advisories/GHSA-35jh-r3h4-6jhm"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "cve-2021-23337:lodash:package-lock.json",
+      "asset": {
+        "value": "package-lock.json:lodash@4.17.20"
+      },
+      "cve": "CVE-2021-23337",
+      "cwe": {
+        "name": "Improper Control of Generation of Code ('Code Injection')",
+        "value": "CWE-94"
+      }
+    },
+    {
+      "orgId": "org_enterprise_01",
+      "status": "In Review",
+      "scanId": "scan_run_201",
+      "pentestId": "pentest_sca_audit_2026",
+      "title": "CVE-2023-45857: Server-Side Request Forgery in Axios via follow-redirects",
+      "description": "The application depends on `axios` version `0.21.1` which pulls a vulnerable version of `follow-redirects`. When handling cross-origin HTTP 302 redirects, confidential `Authorization` and `Cookie` headers are unintentionally forwarded to third-party endpoints. In `src/services/api-client.js`, Axios is used to fetch remote webhooks.",
+      "steps_to_reproduce": "1. Inspect `package.json` confirming `\"axios\": \"^0.21.1\"`.\n2. Review `src/services/api-client.js` line 52 making authenticated requests using `axios.get(targetUrl, { headers: { Authorization: token } })`.\n3. Configure malicious endpoint to return a 302 redirect to an attacker-controlled listener; observe Authorization header forwarded.",
+      "impact": "Leakage of sensitive user and service authentication tokens to untrusted third parties.",
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2023-45857",
+        "https://github.com/advisories/GHSA-pw2r-vq6v-5hwc"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "cve-2023-45857:axios:package-lock.json",
+      "asset": {
+        "value": "package-lock.json:axios@0.21.1"
+      },
+      "cve": "CVE-2023-45857",
+      "cwe": {
+        "name": "Server-Side Request Forgery (SSRF)",
+        "value": "CWE-918"
+      }
+    }
+  ]
+}
+
