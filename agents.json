@@ -17,8 +17,8 @@
         {
             "name": "Web Application Security Agent",
             "value": "web-app-security-agent",
-            "agent_backend": "hermes",
-            "description": "Evaluates web applications for vulnerabilities and security best practices.",
+            "agent_backend": "web-app-security-agent",
+            "description": "Evaluates web applications for vulnerabilities, misconfigurations, and security best practices using an agentic browser.",
             "skill_folder": "web-app-security-skill"
         },
         {

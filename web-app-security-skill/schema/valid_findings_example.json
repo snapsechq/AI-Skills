@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "orgId": "660e1234567890abcdef1234",
+      "pentestId": "6ae8515a861760b4f1e400e0",
+      "scanId": "run_was_6ae829054b68a1348c034f6b",
+      "status": "In Review",
+      "title": "Reflected Cross-Site Scripting (XSS) in Search Query Parameter",
+      "description": "The search functionality at /search reflects the 'q' URL parameter directly into the DOM without sanitization or contextual HTML entity encoding.",
+      "steps_to_reproduce": "1. Launch agent-browser and navigate to: https://target.local/search?q=test\n2. Submit input containing HTML tags.\n3. Verify unencoded reflection in DOM snapshot.",
+      "impact": "Enables an attacker to hijack active user sessions, steal authentication cookies, or execute malicious JavaScript in the victim's session.",
+      "references": [
+        "https://owasp.org/www-community/attacks/xss/",
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "severity": "high",
+      "sent_to_vm": false,
+      "universal_vuln_id": "reflected-xss:target.local:/search:q",
+      "asset": {
+        "value": "https://target.local/search"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+        "value": "CWE-79"
+      }
+    },
+    {
+      "orgId": "660e1234567890abcdef1234",
+      "pentestId": "6ae8515a861760b4f1e400e0",
+      "scanId": "run_was_6ae829054b68a1348c034f6b",
+      "status": "In Review",
+      "title": "Overly Permissive Cross-Origin Resource Sharing (CORS) Policy",
+      "description": "The API endpoint reflects arbitrary Origin request headers with 'Access-Control-Allow-Origin: <origin>' and sets 'Access-Control-Allow-Credentials: true', permitting cross-origin credentialed access.",
+      "steps_to_reproduce": "1. Intercept network request to https://target.local/api/v1/user/profile.\n2. Replay request with header 'Origin: https://evil.com'.\n3. Observe response header 'Access-Control-Allow-Origin: https://evil.com' and 'Access-Control-Allow-Credentials: true'.",
+      "impact": "Malicious third-party websites can issue authenticated requests to read confidential user profile data and tokens.",
+      "references": [
+        "https://portswigger.net/web-security/cors",
+        "https://cwe.mitre.org/data/definitions/942.html"
+      ],
+      "severity": "medium",
+      "sent_to_vm": false,
+      "universal_vuln_id": "cors-permissive:target.local:/api/v1/user/profile",
+      "asset": {
+        "value": "https://target.local/api/v1/user/profile"
+      },
+      "cve": "",
+      "cwe": {
+        "name": "Permissive Cross-domain Policy with Untrusted Domains",
+        "value": "CWE-942"
+      }
+    }
+  ]
+}
+
