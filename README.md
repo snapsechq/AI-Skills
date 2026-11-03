@@ -93,11 +93,11 @@ Skill Bundle: sca-skill/
 
 ## 4. Related Services (Cross-Repository Links)
 
-- 🎯 **[auto-pentest](https://github.com/snapsechq/auto-pentest)**: Automated penetration testing targets, scan dispatching, and host agent detector telemetry.
-- 🤖 **[automation-service](https://github.com/snapsechq/automation-service)**: The central AI execution engine running Hermes, Web App Security, Cloud, SCA, and SAST agents.
-- 🔗 **[integration-service](https://github.com/snapsechq/integration-service)**: Centralized credential vault and third-party provider manager (GitHub, GitLab, AWS, Jira, Slack).
-- 📦 **[migration-service](https://github.com/snapsechq/migration-service)**: Database schema migration runner, AI-Skills git repository synchronizer, and organization seed worker.
-- 🧠 **[AI-Skills](https://github.com/snapsechq/AI-Skills)**: This repository.
+- **[auto-pentest](https://github.com/snapsechq/auto-pentest)**: Automated penetration testing targets, scan dispatching, and host agent detector telemetry.
+- **[automation-service](https://github.com/snapsechq/automation-service)**: The central AI execution engine running Hermes, Web App Security, Cloud, SCA, and SAST agents.
+- **[integration-service](https://github.com/snapsechq/integration-service)**: Centralized credential vault and third-party provider manager (GitHub, GitLab, AWS, Jira, Slack).
+- **[migration-service](https://github.com/snapsechq/migration-service)**: Database schema migration runner, AI-Skills git repository synchronizer, and organization seed worker.
+- **[AI-Skills](https://github.com/snapsechq/AI-Skills)**: This repository.
 
 ---
 
@@ -105,11 +105,11 @@ Skill Bundle: sca-skill/
 
 Technical architecture documentation is maintained in [`docs/01-architecture/`](./docs/01-architecture/) following the Snapsec paginated documentation standard:
 
-* 📖 **[0. Table of Contents](./docs/01-architecture/0-table-of-contents.md)**
-* 🧭 **[1. Overview & Skill Architecture](./docs/01-architecture/1-overview.md)**
-* 📁 **[2. Manifest & Skill Folder Hierarchy](./docs/01-architecture/2-manifest-and-skill-structure.md)**
-* 📱 **[3. Example Skill Walkthrough: Acme Mobile Shop](./docs/01-architecture/3-example-skill-walkthrough.md)**
-* ✍️ **[4. Authoring & Testing Skills Guide](./docs/01-architecture/4-authoring-and-testing-skills.md)**
+* **[0. Table of Contents](./docs/01-architecture/0-table-of-contents.md)**
+* **[1. Overview & Skill Architecture](./docs/01-architecture/1-overview.md)**
+* **[2. Manifest & Skill Folder Hierarchy](./docs/01-architecture/2-manifest-and-skill-structure.md)**
+* **[3. Example Skill Walkthrough: Acme Mobile Shop](./docs/01-architecture/3-example-skill-walkthrough.md)**
+* **[4. Authoring & Testing Skills Guide](./docs/01-architecture/4-authoring-and-testing-skills.md)**
 
 ---
 
