@@ -69,7 +69,10 @@ git commit -m "feat(sast): add taint verification rules for python flask endpoin
 
 ---
 
-## 4. Testing Your Skills Locally
+## 4. Mandatory Testing for Skills & Schemas
+
+> [!IMPORTANT]
+> **A habit we strictly enforce**: AI prompt skills directly dictate LLM reasoning in production. Untested prompts or loose schemas produce hallucinations, malformed JSON, and false alerts for customers. Every author must run local validation and agent tests before opening a pull request.
 
 Skills are tested in conjunction with [automation-service](https://github.com/snapsechq/automation-service):
 
@@ -78,10 +81,11 @@ Skills are tested in conjunction with [automation-service](https://github.com/sn
    ```bash
    AI_SKILLS_LOCAL_PATH=/path/to/dev-setup/backend/AI-Skills
    ```
-2. **Run Playground Test**:
-   Execute the skill in the `automation-service` playground:
+2. **Run Agent Test Suites**:
+   Execute the skill in the `automation-service` test suites:
    ```bash
    node test/sca.agent.test.js
+   node test/sast.agent.test.js
    node test/web-app-security.agent.test.js
    ```
 3. **Verify Schema Conformance**:
@@ -92,8 +96,9 @@ Skills are tested in conjunction with [automation-service](https://github.com/sn
 ## 5. Pull Request (PR) Checklist
 
 Before submitting a PR:
-- [ ] `SKILL.md` has valid YAML frontmatter (`name`, `description`).
-- [ ] No proprietary customer data, hardcoded passwords, or unredacted tokens are in test fixtures.
-- [ ] New agents are registered in `agents.json`.
-- [ ] Output schema JSON files are validated with `validate_results.py`.
+- [ ] **Frontmatter Validation**: `SKILL.md` has valid YAML frontmatter (`name`, `description`).
+- [ ] **Mandatory Testing**: Validated against `automation-service` agent test scripts.
+- [ ] **Schema Validation**: Output JSON schemas in `schema/` are valid and tested.
+- [ ] **Agent Manifest**: New agents are registered in `agents.json`.
+- [ ] **No Secrets**: No proprietary customer data, hardcoded passwords, or unredacted tokens are in test fixtures.
 
