@@ -1,18 +1,10 @@
 import sys, os, json, argparse, ipaddress, socket, stat
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Parse pentest context file and prepare session workspace.")
-    parser.add_argument("context_file", help="Path to the pentest context JSON file.")
+    parser = argparse.ArgumentParser(description="Parse infrastructure pentest context file and prepare session workspace.")
+    parser.add_argument("context_file", help="Path to the project context JSON file.")
     parser.add_argument("--session-dir", default=None, help="Optional custom session directory path.")
     return parser.parse_args()
-
-def resolve_target(url_or_host):
-    try:
-        clean = url_or_host.replace("https://", "").replace("http://", "").split("/")[0].split(":")[0]
-        ip = socket.gethostbyname(clean)
-        return clean, ip
-    except Exception:
-        return url_or_host, None
 
 def to_list(val):
     if not val:
@@ -37,20 +29,18 @@ def main():
         sys.exit(1)
 
     org_id = data.get("orgId")
-    pentest_id = data.get("pentestId", "")
+    project_id = data.get("projectId", "")
     scan_id = data.get("scanId", "")
     name = data.get("name", "Infrastructure Assessment")
-    pentest_config = data.get("pentest_config", {})
-    target_type = (pentest_config.get("target_type") or "black-box").strip().lower()
-    target_ip = pentest_config.get("ip", "").strip()
-    target_ips = to_list(pentest_config.get("ips"))
-    target_url = pentest_config.get("url", "").strip()
-    notes = pentest_config.get("notes", "").strip()
 
-    excluded_raw = to_list(pentest_config.get("excluded_ips") or pentest_config.get("excluded"))
+    # Ingest clean modern project_config schema
+    project_config = data.get("project_config", {})
+    engagement_type = (project_config.get("engagement_type") or "black-box").strip().lower()
+    targets_raw = to_list(project_config.get("targets"))
+    excluded_raw = to_list(project_config.get("out_of_scope"))
     excluded_ips = set(excluded_raw)
 
-    ssh_raw = pentest_config.get("ssh") or {}
+    ssh_raw = project_config.get("ssh") or {}
     ssh_host = str(ssh_raw.get("host") or "").strip()
     try:
         ssh_port = int(ssh_raw.get("port") or 22)
@@ -61,37 +51,25 @@ def main():
     if ssh_auth not in ["key", "password"]:
         ssh_auth = "key"
     ssh_secret = str(ssh_raw.get("secret") or "")
-    ssh_privilege = str(ssh_raw.get("privilege") or "standard").strip().lower()
-    if ssh_privilege not in ["standard", "sudo", "root"]:
-        ssh_privilege = "standard"
 
     has_ssh_config = bool(ssh_host and ssh_user and ssh_secret)
 
-    run_id = scan_id or pentest_id or "session-default"
+    run_id = scan_id or project_id or "session-default"
     session_dir = args.session_dir or ("./session-" + run_id)
     os.makedirs(session_dir, exist_ok=True)
 
     print("[*] Initialized session directory: " + session_dir)
     print("[*] Organization ID: " + str(org_id))
-    print("[*] Pentest ID: " + str(pentest_id))
+    print("[*] Project ID: " + str(project_id))
     print("[*] Scan ID: " + str(scan_id))
-    print("[*] Assessment Posture: " + target_type)
-    print("[*] Target IP: " + (target_ip or "None specified"))
-    if target_ips:
-        print("[*] Target IPs list: " + ", ".join(target_ips))
+    print("[*] Engagement Posture: " + engagement_type)
+    if targets_raw:
+        print("[*] Target Scope: " + ", ".join(targets_raw))
     if excluded_ips:
-        print("[*] Excluded IPs: " + ", ".join(excluded_ips))
-    print("[*] Target URL: " + (target_url or "None specified"))
+        print("[*] Excluded Scope: " + ", ".join(excluded_ips))
 
     targets = []
-    raw_ip_sources = []
-    if target_ip:
-        raw_ip_sources.append(target_ip)
-    for tip in target_ips:
-        if tip not in raw_ip_sources:
-            raw_ip_sources.append(tip)
-
-    for item in raw_ip_sources:
+    for item in targets_raw:
         if "/" in item:
             try:
                 net = ipaddress.ip_network(item, strict=False)
@@ -108,21 +86,13 @@ def main():
                 if ip_clean and ip_clean not in targets and ip_clean not in excluded_ips:
                     targets.append(ip_clean)
 
-    resolved_host = None
-    if target_url:
-        host, resolved_ip = resolve_target(target_url)
-        resolved_host = host
-        if resolved_ip and resolved_ip not in targets and resolved_ip not in excluded_ips:
-            targets.append(resolved_ip)
-
     ssh_key_path = None
-    if target_type == "white-box":
+    if engagement_type == "white-box":
         if has_ssh_config:
             print("[+] White-Box Testing detected with SSH host configuration:")
             print("    - Host: " + ssh_host + ":" + str(ssh_port))
             print("    - Username: " + ssh_user)
             print("    - Auth Method: " + ssh_auth)
-            print("    - Privilege Level: " + ssh_privilege)
             print("    - Internal Host Enumeration: ENABLED")
 
             if ssh_host not in targets and ssh_host not in excluded_ips:
@@ -144,7 +114,6 @@ def main():
                 "port": ssh_port,
                 "username": ssh_user,
                 "auth_method": ssh_auth,
-                "privilege": ssh_privilege,
                 "key_file": ssh_key_path if ssh_auth == "key" else None,
                 "has_password": bool(ssh_auth == "password" and ssh_secret)
             }
@@ -153,21 +122,18 @@ def main():
                 json.dump(ssh_target_info, sf, indent=2)
             print("[+] Saved SSH target details to: " + ssh_info_path)
         else:
-            print("[*] White-Box Testing selected; no SSH host credentials provided in pentest_config.ssh.")
+            print("[*] White-Box Testing selected; no SSH host credentials provided in project_config.ssh.")
 
     plan_path = os.path.join(session_dir, "recon_plan.md")
-    targets_str = ", ".join(targets) if targets else (target_url or "Unspecified")
+    targets_str = ", ".join(targets) if targets else "Unspecified"
     exclusions_str = ", ".join(excluded_ips) if excluded_ips else "None"
 
     with open(plan_path, "w", encoding="utf-8") as pf:
         pf.write("# Reconnaissance Plan\n")
         pf.write("**Target Assessment**: " + str(name) + "\n")
-        pf.write("**Target Posture**: " + str(target_type) + "\n")
+        pf.write("**Engagement Posture**: " + str(engagement_type) + "\n")
         pf.write("**Scope Targets**: " + targets_str + "\n")
-        pf.write("**Target URL**: " + (target_url or "N/A") + "\n")
         pf.write("**Exclusions**: " + exclusions_str + "\n")
-        if notes:
-            pf.write("**Scope Notes**: " + notes + "\n")
 
         pf.write("\n## Reconnaissance Objectives\n")
         pf.write("1. Perform host discovery and confirm live network reachability across external scope.\n")
@@ -176,10 +142,10 @@ def main():
         pf.write("4. Detect operating system, perimeter controls, and firewall behavior.\n")
         pf.write("5. Record all network reconnaissance findings into `recon_knowledge.json`.\n")
 
-        if target_type == "white-box" and has_ssh_config:
+        if engagement_type == "white-box" and has_ssh_config:
             pf.write("\n## White-Box Internal Host Security Objectives (Host: `" + ssh_host + ":" + str(ssh_port) + "`)\n")
-            pf.write("SSH credentials are provided for internal host security auditing (`username: " + ssh_user + "`, `privilege: " + ssh_privilege + "`).\n")
-            pf.write("1. Verify SSH connectivity and validate declared access privilege tier.\n")
+            pf.write("SSH credentials are provided for internal host security auditing (`username: " + ssh_user + "`)\n")
+            pf.write("1. Verify SSH connectivity and validate access permissions.\n")
             pf.write("2. Enumerate internal/loopback network listeners (`127.0.0.1` / local sockets) using `skills/internal-host-enumeration.md`.\n")
             pf.write("3. Check for unauthenticated internal services (local Redis, local databases, internal HTTP APIs).\n")
             pf.write("4. Audit local privilege escalation boundaries, `sudo -l` permissions, and SUID/SGID binaries.\n")
@@ -192,14 +158,12 @@ def main():
     with open(checklist_path, "w", encoding="utf-8") as cf:
         cf.write("# Reconnaissance Checklist\n")
         cf.write("Session ID: " + str(run_id) + "\n")
-        cf.write("Target Posture: " + str(target_type) + "\n\n")
+        cf.write("Engagement Posture: " + str(engagement_type) + "\n\n")
 
-        cf.write("## 1. Scope & DNS Enumeration\n")
+        cf.write("## 1. Scope & Network Target Enumeration\n")
         cf.write("- [ ] Parse target IPs and CIDR blocks (Total Targets: " + str(len(targets)) + ")\n")
         if excluded_ips:
-            cf.write("- [ ] Verify exclusions filtered out: " + exclusions_str + "\n")
-        cf.write(f"- [ ] Resolve URL '{target_url or 'N/A'}' (Resolved: {resolved_host or 'N/A'})\n")
-        cf.write("- [ ] Determine reverse DNS (PTR) records\n\n")
+            cf.write("- [ ] Verify exclusions filtered out: " + exclusions_str + "\n\n")
 
         cf.write("## 2. Host Reachability & Alive Checks\n")
         if targets:
@@ -218,11 +182,11 @@ def main():
                 cf.write("- [ ] Service Banner Grabbing & Protocol Handshake\n")
                 cf.write("- [ ] OS & Perimeter Device Identification\n")
 
-        if target_type == "white-box" and has_ssh_config:
+        if engagement_type == "white-box" and has_ssh_config:
             cf.write("\n## 4. White-Box Internal Host Enumeration (Host: `" + ssh_host + ":" + str(ssh_port) + "`)\n")
             cf.write("*Reference Guide: `skills/internal-host-enumeration.md`*\n")
             cf.write("- [ ] Verify SSH access using provided credentials (`" + ssh_user + "`, method: `" + ssh_auth + "`)\n")
-            cf.write("- [ ] Verify user identity and validate declared privilege tier (`id`, `whoami`, declared: `" + ssh_privilege + "`)\n")
+            cf.write("- [ ] Verify user identity and group memberships (`id`, `whoami`)\n")
             cf.write("- [ ] Audit sudo permissions and privilege escalation vectors (`sudo -l`)\n")
             cf.write("- [ ] Enumerate internal network listeners (`ss -tulpn` / `netstat -tulpn` on 127.0.0.1)\n")
             cf.write("- [ ] Probe internal-only services without authentication (local Redis, local databases, internal management APIs)\n")
